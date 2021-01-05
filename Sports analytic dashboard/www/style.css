@@ -1,0 +1,53 @@
+.skin-blue .main-header .logo {
+  background-color: #667366;
+}
+  .skin-blue .main-header .logo:hover {
+    background-color: #667366;
+  }
+  .skin-blue .main-header .navbar {
+    background-color: #7e887e;
+  }
+  .skin-blue .main-sidebar {
+    background-color: #7e887e;
+  }
+  .skin-blue .main-sidebar .sidebar .sidebar-menu .active a{
+    background-color:  #cccecc;
+  }
+  
+  .skin-blue .main-sidebar .sidebar .sidebar-menu a{
+    background-color: #919891;
+      color: #fff;
+  }
+  .skin-blue .main-sidebar .sidebar .sidebar-menu a:hover{
+    background-color: #747d74;
+  }
+  .skin-blue .main-header .navbar .sidebar-toggle:hover{
+    background-color: #000;
+  }
+  .sirpi-color{
+ display: block;
+    position: fixed;
+    left: 0.7%;
+    margin-top:680px;
+    margin-left: auto;
+    size: portrait;
+    width:9%;
+    background-color:white;
+  }
+  .content-wrapper, .right-side {
+    min-height: 100%;
+    background-image: url(badminton1.jpg);
+    z-index: 800;
+        background-size: cover;
+  }
+  .selectize-input.full {
+    background-color: #ffffff;
+    height: 50px;
+}
+label {
+    display: inline-block;
+    max-width: 100%;
+    margin-bottom: 5px;
+    font-weight: 1000;
+    font-size: x-large;
+}
