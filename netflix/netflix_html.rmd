@@ -1,0 +1,241 @@
+---
+title:  NETFLIX ANALYSIS REPORT 
+output: html_document
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(janitor)
+library(ggplot2)
+library(plotrix)
+library(lubridate)
+library(dplyr)
+library(plotly)
+library(gt)
+
+"netflix_titles.csv" %>% read_csv() %>% clean_names()->nf
+
+
+```
+#### Netflix is the world's leading internet entertainment service with 158 million paid memberships in over 190 countries enjoying TV series, documentaries and feature films across a wide variety of genres and languages. Members can watch as much as they want, anytime, anywhere, on any internet-connected screen. Members can play, pause and resume watching, all without commercials or commitments.
+
+### **The Most watched based on their category**
+#### There are totally 4265 movies watched mostly based on the category,which is high compared to the tv shows.
+```{r , warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+nf %>% 
+  group_by(type) %>% 
+  summarise(count=n()) %>% 
+  ggplot(aes(x=type,y=count))+
+  geom_col(position = position_dodge())+
+  geom_col(fill="#06cc4b")+
+  theme_linedraw()+
+  geom_text(aes(label = count), position = position_dodge(width = 1),
+            vjust = -0.5, size = 4.0)+
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        plot.title = element_text(size = 20,face = "bold"),
+        axis.text  = element_text(size = 12,face = "bold"),
+        plot.subtitle = element_text(size = 10),
+        legend.position = "bottom",
+        axis.title = element_text(size = 14,face = "bold"))+
+  labs(title=" ",
+       x="Category",y="Count")->plot1
+ggsave(
+  "plot1.jpg",
+  plot1,
+  width = 30,
+  height = 15,
+  units = "cm"
+)
+
+```
+
+``` {r, warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+knitr::include_graphics("plot1.jpg")
+
+```
+
+
+### **Which country releases the most movies and at which year?**
+#### Here we can say which country releases the most movies and at which year , After United States, India is the largest source of Movies listed on Netflix, and UK is the third.eventhough there are lot of movies in india the tv shows of india are way to less compared to their movies.
+
+```{r , warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+nf %>%
+  group_by(type) %>%
+  mutate(country=fct_infreq(country)) %>%
+  ggplot(aes(x=country))+
+  geom_bar(stat = "count",position = position_dodge(),fill="#06cc4b")+
+  facet_wrap(~type, scales = 'free_x') +
+  coord_cartesian(xlim = c(1,10))+
+  scale_x_discrete(labels = function(x){str_wrap(x,10)}, breaks = function(x) {x[1:10]})+
+  theme_classic()+
+  theme(
+    axis.text  = element_text(size = 11,angle=20,face = "bold"),
+    axis.title = element_text(size = 14,face = "bold"))->plot2
+
+ggsave(
+  "plot2.jpg",
+  plot2,
+  width = 30,
+  height = 20,
+  units = "cm"
+)
+
+```
+
+``` {r, warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+knitr::include_graphics("plot2.jpg")
+
+```
+
+\newpage
+
+### **Which month do produce a lot of films and shows each year ?**  
+
+#### Mostly December and January month releases more amount of films at each year.Where as in tv shows October and November month releases most amount of the tv shows,we can easily infer that from both Movies and Tv shows February month has the least amount of movies and shows released.
+
+```{r , warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+nf %>% 
+  group_by(date_added) %>% 
+  mutate(Month_Added=months(as.POSIXlt(date_added, format="%B %d, %Y"))) %>% 
+  group_by(Month_Added,type) %>% 
+  summarise(count=n()) %>% 
+  ungroup() %>% 
+  drop_na() -> month_nf 
+
+month_nf %>% 
+  rename(Type=type) %>% 
+  ggplot(aes(x=Month_Added %>% factor(levels=c("January","February","March","April","May","June","July",
+                                               "August","September","October","November","December")),y=count,group=Type,color=Type))+
+  geom_point()+
+  #geom_col(aes(x=Month_Added,y=count,fill=type),position=position_dodge())+
+  geom_line()+
+  theme_minimal()+
+  geom_text(aes(x=Month_Added,y=count,label = count), position = position_dodge(width = 0.25),vjust = -0.5, size = 6)+
+  theme(
+    plot.title = element_text(size = 15),
+    axis.text  = element_text(size = 15,angle=10,face="bold"),
+    plot.subtitle = element_text(size = 10),
+    legend.position = "bottom",
+    axis.title = element_text(size = 14,face = "bold"))+
+  labs(title="Films and Shows added based on each month",x="Month",y="Count")->plot3
+
+ggsave(
+  "plot3.jpg",
+  plot3,
+  width = 30,
+  height = 20,
+  units = "cm"
+)
+
+```
+
+``` {r, warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+knitr::include_graphics("plot3.jpg")
+
+```
+
+
+### **Latest movies released  and their ratings**
+
+#### In the Top 20 recent movies whic released in 2020 and 2019 where mostly rated as TV-MA, this TV-MA is specifically designed to be viewed by adults and therefore may be unsuitable for children under 17. Contains content that is unsuitable for children.
+
+
+```{r , warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+nf %>% 
+  arrange(desc(release_year)) %>% 
+  filter(type=="Movie") %>% 
+  select(c(type,release_year,title,rating)) ->nf_pie
+
+
+nf_pie %>% 
+  unique() %>% 
+  slice(1:20) %>% 
+  group_by(title,release_year) %>% 
+  arrange(desc(release_year)) %>%
+  ggplot(aes(x=title,y=release_year%>%factor() %>% fct_reorder(release_year),fill=rating))+ 
+  geom_col()+
+  coord_flip()+
+  theme(
+    plot.title = element_text(size = 15),
+    axis.text  = element_text(size = 16,face = "bold"),
+    plot.subtitle = element_text(size = 8),
+    axis.title = element_text(size = 15,face = "bold"))+
+  labs(title="Films  released in recent years and their ratings",x="Title",y="Year")->plot4
+
+ggsave(
+  "plot4.jpg",
+  plot4,
+  width = 45,
+  height = 30,
+  units = "cm"
+)
+
+```
+
+
+``` {r, warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+knitr::include_graphics("plot4.jpg")
+
+```
+
+\newpage
+
+### **Content based on each rating**
+#### From this pie chart we can infer that First Largest is the TV-MA is rated the most with 32.6%.
+#### Second largest is the 'TV-14' stands for content that may be inappropriate for children younger than 14 years of age.
+#### Third largest is the very popular 'R' rating.An R-rated film is a film that has been assessed as having material which may be unsuitable for children under the age of 17 by the Motion Picture Association of America; the MPAA writes "Under 17 requires accompanying parent or adult guardian".
+#### NC-17(No children under 17 admitted) is least rated count.so the Nc-17 content movies are minimum in netlix.
+
+```{r , warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+nf%>% group_by(rating) %>% summarise(count = n()) %>% drop_na() ->rating_nf
+plot_ly(rating_nf, labels = ~rating, values = ~count, type = 'pie') %>% 
+  layout(title = 'Content based on each Rating')
+
+```
+
+
+### **Directors who have made lots of movies**
+#### In this table  we can see the top 15 directors , who have made maximum number of movies , Raul campos,Jan suter where the top directors where they have made 18 movies .
+```{r , warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+nf %>% 
+  group_by(director) %>% 
+  summarise(count=n()) %>% 
+  drop_na() %>% 
+  rename(Director=director) %>% 
+  arrange(desc(count)) %>% 
+  top_n(15) -> dir_top
+
+gt(dir_top) %>% 
+  fmt_markdown(columns = TRUE) %>% 
+  tab_style(
+    style = cell_borders(
+      #sides = c("left", "right","top","bottom"),
+      sides = "all",
+      color = "#BBBBBB",
+      weight = px(1.5),
+      style = "solid"
+    ),
+    locations = cells_body(
+      columns = everything(),
+      rows = everything()
+    )
+  ) %>% 
+  tab_options(
+    table.background.color = "#dff0ee",
+    #container.width = 100,
+    table.width = pct(90),
+    table.border.right.style = "solid",
+    table.border.left.style = "solid",
+    column_labels.vlines.style = "solid",
+    column_labels.vlines.color = "solid",
+    heading.background.color = "#fff",
+    heading.title.font.size = 25,
+    heading.align = "center"
+  ) %>%
+  cols_align(
+    align = "left") %>% 
+  gtsave("table1.png")
+
+```
