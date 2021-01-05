@@ -1,0 +1,171 @@
+---
+title: "Air-bed and breakfast(Airbnb) Report"
+output:
+  word_document:
+    reference_doc: "airbnb_sample.docx" 
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(janitor)
+library(leaflet)
+library(ggmap)
+library(corrplot)
+library(RColorBrewer)
+library(ggcorrplot)
+library(shiny)
+
+"AB_NYC_2019.csv" %>%
+  read_csv() -> anb1
+```
+
+## **INTRODUCTION**
+
+#### Airbnb, the world leader in accommodations of the “sharing economy”, allows you to find places to stay directly from individuals in thousands of cities around the world.
+
+#### It allows you to rent apartments (or even entire houses) from people all over the world, almost everywhere in fact.
+
+
+## **Location Wise Room Availability**
+
+#### From the Availability of room plots ,we can conclude that **Manhattan** has more number of room availability compared to other locations.
+
+```{r , warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+anb1 %>% 
+  group_by(neighbourhood_group) %>%
+  summarise(count=availability_365 %>% sum) %>% 
+  arrange(desc(neighbourhood_group)) %>%
+  ungroup %>% 
+  slice(1:5) %>% 
+  arrange(desc(count)) %>%
+  ggplot(aes(x=neighbourhood_group %>% factor() %>% fct_reorder(count),
+             y=count))+
+  geom_col(position = position_dodge())+
+  geom_col(fill="#06cc4b")+
+  theme_minimal()+
+  geom_text(aes(label = count), position = position_dodge(width = 1),
+            vjust = -0.5, size = 3.0)+
+  theme(
+    plot.title = element_text(size = 25),
+    axis.text  = element_text(size = 15),
+    plot.subtitle = element_text(size = 10),
+    legend.position = "bottom")+
+  labs(x="Location",y="Room availability")->plt1
+ggsave("location-wise room .jpg",plt1, height = 8, width = 10, units = "in")
+
+```
+
+
+``` {r, warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+
+ knitr::include_graphics("location-wise room .jpg")
+
+```
+
+
+## **Average Price for Each Area**
+
+#### The Plot Below shows the average price of each location , Here we can see more variation in average price of each location. Overall, it looks like **Manhattan** Location is slightly pricier than other locations.
+
+```{r , warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+anb1 %>% 
+    group_by(neighbourhood_group) %>%
+    summarise(count=price%>% mean (no.rm=T) %>% round(2)) %>% 
+    ungroup() %>%
+    slice(1:5) %>% 
+    arrange(desc(count)) %>%
+    ggplot(aes(x=count,
+      y=neighbourhood_group %>% factor() %>% fct_reorder(count)))+
+    geom_col(position = position_dodge())+
+    geom_col(fill="#F6972C")+
+    coord_flip()+
+    theme_minimal()+
+    geom_text(aes(label = count), position = position_dodge(width = 1),
+              vjust = -0.5, size = 3.5)+
+    theme(
+      plot.title = element_text(size = 15),
+      axis.text  = element_text(size = 15),
+      plot.subtitle = element_text(size = 10),
+      legend.position = "bottom")+
+    labs(title="Average price of each Location",x="Price",y="Location")->plt2
+    ggsave("Average-price of area.jpg",plt2, height = 8, width = 10, units = "in")
+```
+
+
+``` {r, warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+
+ knitr::include_graphics("Average-price of area.jpg")
+
+```
+ 
+
+## **Ranking by Room Type**
+
+#### Below is the chart that shows the distributions of Different room types of each location with respect to reviews.
+#### Entire Room/Apartment type is highest in number, of all the other room types, and **Manhattan** has the highest Entire Room/Apartment type. People in Queens and Bronx prefer private room compared to Entire Room/Apartment type, this is so intuitive. We can also infer that shared room reviews are way less compared to other room types. 
+
+
+```{r , warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+ 
+ anb1 %>% 
+    group_by(room_type,neighbourhood_group) %>% 
+    summarise(count=c(number_of_reviews) %>% sum %>% round(2)) %>%
+    arrange(desc(count)) %>% 
+    mutate(count=count/1000)  %>% 
+    mutate(room=room_type %>% factor() %>% fct_reorder(count)) %>% 
+    ggplot(aes(x =neighbourhood_group,
+               y=count,
+               fill=room,
+               ))+
+      geom_col(position = position_dodge())+
+      scale_fill_manual(values = c("#06cc4b", "#349ded","#F6972C"))+
+      labs(title = "Room Type of Each Location",
+          subtitle = "Based on Reviews",
+         x = "Location",
+         y = "Reviews",
+         fill = "Room Type")+
+      geom_text(aes(label = count %>% round(2)), position = position_dodge(width = 1),
+                vjust = -0.5, size = 3)+
+      theme_minimal() +
+      theme(
+        plot.title = element_text(size = 15),
+        axis.text  = element_text(size = 10),
+        plot.subtitle = element_text(size = 10),
+        legend.position = "bottom")->plt3
+ ggsave("Room Type of Each Location.jpg",plt3, height = 8, width = 10, units = "in")
+```
+
+  
+``` {r, warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+
+ knitr::include_graphics("Room Type of Each Location.jpg")
+
+```
+
+
+
+##  **CORRELATION PLOT**
+
+#### This correlation plot is representing the correlation matrix of the numeric variables in the dataset. We exclured 2 variables : “id” and “host_id” which are also determined as numeric variables but have no meaning in our analysis.
+
+#### Through this correlation matrix, we found that the “availability_365” variable is most correlated with the variable “calculated_host_listings_count” (21%), and then with the variable “number_of_reviews” (17%). Howerver, the correlations are not very strong.
+```{r , warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+
+anb2<- select(anb1,-c(name,neighbourhood_group,neighbourhood,host_name,last_review,room_type,id,host_id,reviews_per_month))
+    #select(anb1(),-c(name,neighbourhood_group,neighbourhood,host_name,last_review,room_type,latitude,longitude,reviews_per_month,id,host_id))
+ 
+  
+   airbnbcor<-cor(anb2)
+  ggcorrplot(airbnbcor, hc.order = TRUE, type = "full",
+             lab = TRUE)->plot4
+  
+   ggsave("corr.jpg",plot4, height = 8, width = 10, units = "in")
+   
+```
+
+``` {r, warning=FALSE, echo=FALSE,error=FALSE,message=FALSE}
+
+ knitr::include_graphics("corr.jpg")
+
+```

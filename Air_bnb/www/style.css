@@ -1,0 +1,25 @@
+.skin-blue .main-header .navbar {
+  background-color: darkgray;
+}
+.skin-blue .main-header .logo {
+    background-color: #E85789;
+    color: #fff;
+    border-bottom: 0 solid transparent;
+}
+.content-wrapper, .right-side {
+    min-height: 100%;
+    background-image: url(image.jpg);
+    z-index: 800;
+    background-size: cover;
+}
+.skin-blue .sidebar a {
+    color: black;
+}
+.skin-blue .left-side, .skin-blue .main-sidebar, .skin-blue .wrapper {
+    background-color: darkgray;
+}
+.skin-blue .sidebar-menu>li.active>a, .skin-blue .sidebar-menu>li:hover>a {
+    color: #fff;
+    background: border-box;
+    border-left-color: #3c8dbc;
+}
